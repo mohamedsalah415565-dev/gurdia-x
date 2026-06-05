@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "178291561195",
+    "project_id": "guardianx-50c1a",
+    "storage_bucket": "guardianx-50c1a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:178291561195:android:6d300677e34f0fc75264ae",
+        "android_client_info": {
+          "package_name": "com.example.guardian_x"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABHPd9a4Oa2akQTfecrsHNY9OLQ8-ahqM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
