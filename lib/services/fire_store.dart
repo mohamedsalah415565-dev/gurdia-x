@@ -18,11 +18,11 @@ class FirestoreService {
     await _db
         .collection("users")
         .doc(user.uid)
-        .collection("mobile_app")
+        .collection("mobile_reports")
         .add({
-      "videoUrl": videoUrl,
-      "type": type,
-      "createdAt": FieldValue.serverTimestamp(),
-    });
+          "videoUrl": videoUrl,
+          "type": type,
+          "createdAt": FieldValue.serverTimestamp(),
+        });
   }
 }
