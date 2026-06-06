@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:gap/gap.dart';
 import 'package:guardian_x/auth_gate.dart';
 import 'package:guardian_x/bloc/bloc_bloc.dart';
 import 'package:guardian_x/bloc/bloc_event.dart';
@@ -38,10 +37,10 @@ class _OnboardingViewState extends State<OnboardingView> {
     super.dispose();
   }
 
-  /// حفظ إن الـ onboarding اتكمّل والانتقال للـ AuthGate
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_completed', true);
+
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -73,7 +72,99 @@ class _OnboardingViewState extends State<OnboardingView> {
           }
 
           if (state is OnboardingInProgress) {
-            return _buildOnboardingScreen(context, state);
+            return Scaffold(
+              backgroundColor: AppTheme.white,
+              appBar: AppBar(
+                backgroundColor: AppTheme.white,
+                elevation: 0,
+                actions: [
+                  TextButton(
+                    onPressed: _completeOnboarding,
+                    child: const Text(
+                      'Skip',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 19,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                ],
+              ),
+
+              body: SafeArea(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: PageView.builder(
+                        itemCount: OnboardingData.pages.length,
+                        controller: _pageController,
+                        physics: const BouncingScrollPhysics(),
+                        onPageChanged: (index) {
+                          context.read<OnboardingBloc>().add(
+                            PageChanged(index),
+                          );
+                        },
+                        itemBuilder: (context, index) =>
+                            _buildOnboardingPage(OnboardingData.pages[index]),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    AnimatedSlide(
+                      duration: const Duration(milliseconds: 500),
+                      offset: state.isLastPage
+                          ? Offset.zero
+                          : const Offset(0, 1),
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 500),
+                        opacity: state.isLastPage ? 1 : 0,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: _completeOnboarding,
+                              child: const Text(
+                                'Ok',
+                                style: TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    AnimatedSmoothIndicator(
+                      activeIndex: state.currentIndex,
+                      count: OnboardingData.pages.length,
+                      effect: const ScrollingDotsEffect(
+                        activeDotColor: Colors.black,
+                        dotHeight: 10,
+                        dotWidth: 10,
+                      ),
+                    ),
+
+                    const SizedBox(height: 15),
+                  ],
+                ),
+              ),
+            );
           }
 
           return const SizedBox();
@@ -82,111 +173,25 @@ class _OnboardingViewState extends State<OnboardingView> {
     );
   }
 
-  Widget _buildOnboardingScreen(
-    BuildContext context,
-    OnboardingInProgress state,
-  ) {
-    return Scaffold(
-      backgroundColor: AppTheme.white,
-      appBar: AppBar(
-        backgroundColor: AppTheme.white,
-        elevation: 0,
-        actions: [
-          TextButton(
-            onPressed: _completeOnboarding,
-            child: const Text(
-              'Skip',
-              style: TextStyle(
-                fontWeight: FontWeight.w400,
-                fontSize: 19,
-                color: Colors.black,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: PageView.builder(
-                itemCount: OnboardingData.pages.length,
-                controller: _pageController,
-                physics: const BouncingScrollPhysics(),
-                onPageChanged: (index) {
-                  context.read<OnboardingBloc>().add(PageChanged(index));
-                },
-                itemBuilder: (context, index) =>
-                    _buildOnboardingPage(OnboardingData.pages[index]),
-              ),
-            ),
-
-            // Animated Ok button
-            AnimatedSlide(
-              duration: const Duration(milliseconds: 500),
-              offset: state.isLastPage
-                  ? const Offset(0, 0)
-                  : const Offset(0, 1),
-              curve: Curves.easeOut,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 500),
-                opacity: state.isLastPage ? 1 : 0,
-                child: SizedBox(
-                  width: 300,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: _completeOnboarding,
-                    child: const Text(
-                      'Ok',
-                      style: TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            const Gap(20),
-            AnimatedSmoothIndicator(
-              activeIndex: state.currentIndex,
-              count: OnboardingData.pages.length,
-              effect: const ScrollingDotsEffect(
-                activeDotColor: Colors.black,
-                dotHeight: 10,
-                dotWidth: 10,
-              ),
-            ),
-            const Gap(20),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildOnboardingPage(OnboardingPage page) {
     return Column(
       children: [
+        const Spacer(),
+
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Image.asset(
             page.image,
-            height: 300,
-            width: 300,
+            height: 260,
+            width: 260,
             fit: BoxFit.contain,
           ),
         ),
+        const Spacer(),
+
+        // const SizedBox(height: 30),
         Padding(
-          padding: const EdgeInsets.only(left: 20, right: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
             page.title,
             textAlign: TextAlign.center,
@@ -197,6 +202,8 @@ class _OnboardingViewState extends State<OnboardingView> {
             ),
           ),
         ),
+
+        const Spacer(),
       ],
     );
   }
