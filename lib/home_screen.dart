@@ -41,9 +41,9 @@ class HomeScreen extends StatelessWidget {
                         backgroundColor: Colors.grey.shade300,
                         backgroundImage:
                             data['profile_image'].startsWith('assets')
-                                ? AssetImage(data['profile_image'])
-                                : NetworkImage(data['profile_image'])
-                                    as ImageProvider,
+                            ? AssetImage(data['profile_image'])
+                            : NetworkImage(data['profile_image'])
+                                  as ImageProvider,
                       ),
                       const SizedBox(width: 15),
                       Text(
@@ -73,7 +73,7 @@ class HomeScreen extends StatelessWidget {
                     stream: FirebaseFirestore.instance
                         .collection('users')
                         .doc(AuthService.currentUser!.uid)
-                        .collection('mobile_app')
+                        .collection('mobile_reports')
                         .orderBy('createdAt', descending: true)
                         .limit(20)
                         .snapshots(),
@@ -191,8 +191,11 @@ class _HistoryTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Icon(Icons.play_circle_fill,
-                    color: Colors.white70, size: 28),
+                const Icon(
+                  Icons.play_circle_fill,
+                  color: Colors.white70,
+                  size: 28,
+                ),
               ],
             ),
           ),
@@ -303,9 +306,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 const SizedBox(height: 20),
               ],
             )
-          : const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
+          : const Center(child: CircularProgressIndicator(color: Colors.white)),
     );
   }
 }
