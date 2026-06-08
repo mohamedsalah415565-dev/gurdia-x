@@ -12,8 +12,7 @@ class EventRepository {
       print("🚀 Start uploading file...");
 
       // رفع الفيديو على Cloudinary
-      final videoUrl =
-          await _cloudinaryService.uploadFile(file, isVideo: true);
+      final videoUrl = await _cloudinaryService.uploadFile(file, isVideo: true);
 
       // ignore: avoid_print
       print("📹 Video URL: $videoUrl");

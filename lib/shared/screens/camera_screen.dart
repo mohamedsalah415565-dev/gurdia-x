@@ -59,8 +59,9 @@ class _CameraScreenState extends State<CameraScreen> {
       if (mounted) setState(() {});
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Camera error: $e")));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Camera error: $e")));
       }
     }
   }
@@ -86,8 +87,9 @@ class _CameraScreenState extends State<CameraScreen> {
       _startTimer();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Recording error: $e")));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Recording error: $e")));
       }
     }
   }
@@ -112,9 +114,9 @@ class _CameraScreenState extends State<CameraScreen> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Uploading video... ☁️")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Uploading video... ☁️")));
       }
 
       // ✅ رفع مباشر بدون compute
@@ -125,9 +127,9 @@ class _CameraScreenState extends State<CameraScreen> {
 
       if (videoUrl == null) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Upload failed ❌")),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text("Upload failed ❌")));
         }
         setState(() => _isUploading = false);
         return;
@@ -150,8 +152,9 @@ class _CameraScreenState extends State<CameraScreen> {
         _isUploading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Error: $e")));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error: $e")));
       }
     }
   }
@@ -186,7 +189,9 @@ class _CameraScreenState extends State<CameraScreen> {
                                 top: 50,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 8),
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.black54,
                                     borderRadius: BorderRadius.circular(20),
@@ -194,15 +199,19 @@ class _CameraScreenState extends State<CameraScreen> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.circle,
-                                          color: Colors.red, size: 12),
+                                      const Icon(
+                                        Icons.circle,
+                                        color: Colors.red,
+                                        size: 12,
+                                      ),
                                       const SizedBox(width: 8),
                                       Text(
                                         _formatDuration(_recordingSeconds),
                                         style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -218,12 +227,15 @@ class _CameraScreenState extends State<CameraScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       CircularProgressIndicator(
-                                          color: Colors.white),
+                                        color: Colors.white,
+                                      ),
                                       SizedBox(height: 12),
                                       Text(
                                         "Uploading...",
                                         style: TextStyle(
-                                            color: Colors.white, fontSize: 16),
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -245,10 +257,12 @@ class _CameraScreenState extends State<CameraScreen> {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    style:
-                        ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    onPressed:
-                        _isUploading ? null : () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
+                    onPressed: _isUploading
+                        ? null
+                        : () => Navigator.pop(context),
                     child: const Text("Cancel"),
                   ),
                 ),
@@ -259,14 +273,14 @@ class _CameraScreenState extends State<CameraScreen> {
                       backgroundColor: _isUploading
                           ? Colors.grey[600]
                           : _isRecording
-                              ? Colors.red[800]
-                              : Colors.grey,
+                          ? Colors.red[800]
+                          : Colors.grey,
                     ),
                     onPressed: _isUploading
                         ? null
                         : _isRecording
-                            ? _stopRecordingAndUpload
-                            : _startRecording,
+                        ? _stopRecordingAndUpload
+                        : _startRecording,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -274,16 +288,18 @@ class _CameraScreenState extends State<CameraScreen> {
                           _isUploading
                               ? Icons.hourglass_top
                               : _isRecording
-                                  ? Icons.stop
-                                  : Icons.videocam,
+                              ? Icons.stop
+                              : Icons.videocam,
                           size: 18,
                         ),
                         const SizedBox(width: 6),
-                        Text(_isUploading
-                            ? "Uploading..."
-                            : _isRecording
-                                ? "Stop"
-                                : "Record"),
+                        Text(
+                          _isUploading
+                              ? "Uploading..."
+                              : _isRecording
+                              ? "Stop"
+                              : "Record",
+                        ),
                       ],
                     ),
                   ),
