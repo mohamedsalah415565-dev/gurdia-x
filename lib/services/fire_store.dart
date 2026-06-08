@@ -8,6 +8,7 @@ class FirestoreService {
   Future<void> saveEvent({
     required String videoUrl,
     required String type,
+    String description = 'mobile',
   }) async {
     final user = _auth.currentUser;
 
@@ -23,6 +24,7 @@ class FirestoreService {
           "videoUrl": videoUrl,
           "type": type,
           "createdAt": FieldValue.serverTimestamp(),
+          "description": description,
         });
   }
 }
