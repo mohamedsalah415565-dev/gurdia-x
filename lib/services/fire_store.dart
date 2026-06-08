@@ -8,26 +8,34 @@ class FirestoreService {
 
   /// Get current device location
   Future<Position> getCurrentLocation() async {
+    // 1. Check location service (GPS)
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
     if (!serviceEnabled) {
-      throw Exception('Location services are disabled.');
+      await Geolocator.openLocationSettings();
+      throw Exception('Please enable GPS (Location services).');
     }
 
+    // 2. Check permission
     LocationPermission permission = await Geolocator.checkPermission();
 
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
+
+      if (permission == LocationPermission.denied) {
+        throw Exception('Location permission denied.');
+      }
     }
 
-    if (permission == LocationPermission.denied) {
-      throw Exception('Location permission denied.');
-    }
-
+    // 3. Permanently denied
     if (permission == LocationPermission.deniedForever) {
-      throw Exception('Location permissions are permanently denied.');
+      await Geolocator.openAppSettings();
+      throw Exception(
+        'Permission permanently denied. Open settings to enable it.',
+      );
     }
 
+    // 4. Get position
     return await Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
@@ -39,13 +47,13 @@ class FirestoreService {
     required String type,
     String badge = 'mobile',
   }) async {
-    final user = _auth.currentUser;
+    final User? user = _auth.currentUser;
 
     if (user == null) {
-      throw Exception('User not logged in');
+      throw Exception('User not logged in.');
     }
 
-    final position = await getCurrentLocation();
+    final Position position = await getCurrentLocation();
 
     await _db
         .collection('users')
@@ -56,6 +64,7 @@ class FirestoreService {
           'type': type,
           'badge': badge,
           'email': user.email,
+          'uid': user.uid,
           'latitude': position.latitude,
           'longitude': position.longitude,
           'location': GeoPoint(position.latitude, position.longitude),
