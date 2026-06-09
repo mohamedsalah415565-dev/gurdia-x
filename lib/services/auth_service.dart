@@ -9,80 +9,107 @@ class AuthService {
 
   static User? get currentUser => _auth.currentUser;
 
-  // LOGIN
+  /// LOGIN
   static Future<User> login({
     required String email,
     required String password,
   }) async {
-    final cred = await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      final cred = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    if (cred.user == null) throw "Login failed";
-    return cred.user!;
+      final user = cred.user;
+      if (user == null) {
+        throw Exception("Login failed. Try again.");
+      }
+
+      return user;
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_authError(e));
+    } catch (e) {
+      throw Exception("Unexpected error occurred");
+    }
   }
 
-  // REGISTER
+  /// REGISTER
   static Future<User> register({
     required String email,
     required String password,
   }) async {
-    final cred = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      final cred = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    final user = cred.user;
-    if (user == null) throw "User creation failed";
+      final user = cred.user;
+      if (user == null) {
+        throw Exception("User creation failed");
+      }
 
-    await _firestore.collection('users').doc(user.uid).set({
-      'uid': user.uid,
-      'email': email,
-      'name': "",
-      'profile_image': "",
-      'setup_complete': false,
-      'created_at': FieldValue.serverTimestamp(),
-      'role': 'user',
-    });
+      final userRef = _firestore.collection('users').doc(user.uid);
 
-    return user;
-  }
-
-  // GOOGLE SIGN IN
-  static Future<User?> signInWithGoogle() async {
-    final googleUser = await _googleSignIn.signIn();
-    if (googleUser == null) return null;
-
-    final googleAuth = await googleUser.authentication;
-
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    final userCredential = await _auth.signInWithCredential(credential);
-    final user = userCredential.user;
-
-    if (user == null) return null;
-
-    final userRef = _firestore.collection('users').doc(user.uid);
-    final doc = await userRef.get();
-
-    if (!doc.exists) {
       await userRef.set({
         'uid': user.uid,
-        'email': user.email ?? "",
-        'name': user.displayName ?? "",
-        'profile_image': user.photoURL ?? "",
+        'email': email,
+        'name': "",
+        'profile_image': "",
         'setup_complete': false,
+        'role': 'user',
         'created_at': FieldValue.serverTimestamp(),
       });
-    }
 
-    return user;
+      return user;
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_authError(e));
+    } catch (e) {
+      throw Exception("Unexpected error occurred");
+    }
   }
 
+  /// GOOGLE SIGN IN
+  static Future<User?> signInWithGoogle() async {
+    try {
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return null;
+
+      final googleAuth = await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await _auth.signInWithCredential(credential);
+
+      final user = userCredential.user;
+      if (user == null) return null;
+
+      final userRef = _firestore.collection('users').doc(user.uid);
+
+      final doc = await userRef.get();
+
+      if (!doc.exists) {
+        await userRef.set({
+          'uid': user.uid,
+          'email': user.email ?? "",
+          'name': user.displayName ?? "",
+          'profile_image': user.photoURL ?? "",
+          'setup_complete': false,
+          'role': 'user',
+          'created_at': FieldValue.serverTimestamp(),
+        });
+      }
+
+      return user;
+    } catch (e) {
+      throw Exception("Google sign-in failed");
+    }
+  }
+
+  /// PROFILE UPDATE
   static Future<void> finalizeProfile({
     required String uid,
     required String name,
@@ -95,9 +122,29 @@ class AuthService {
     }, SetOptions(merge: true));
   }
 
-  // LOGOUT
+  /// LOGOUT
   static Future<void> logout() async {
     await _googleSignIn.signOut();
     await _auth.signOut();
+  }
+
+  /// MAP FIREBASE ERRORS → USER FRIENDLY MESSAGES
+  static String _authError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'user-not-found':
+        return 'No account found with this email';
+      case 'wrong-password':
+        return 'Incorrect password';
+      case 'email-already-in-use':
+        return 'Email already registered';
+      case 'invalid-email':
+        return 'Invalid email address';
+      case 'weak-password':
+        return 'Password is too weak';
+      case 'user-disabled':
+        return 'This account has been disabled';
+      default:
+        return e.message ?? 'Authentication error occurred';
+    }
   }
 }

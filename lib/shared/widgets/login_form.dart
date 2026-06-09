@@ -22,6 +22,93 @@ class LoginForm extends StatefulWidget {
 class _LoginFormState extends State<LoginForm> {
   bool obscurePassword = true;
 
+  /// EMAIL VALIDATOR
+  String? _emailValidator(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Email is required';
+    }
+
+    final email = value.trim();
+
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+
+    if (!emailRegex.hasMatch(email)) {
+      return 'Enter a valid email address';
+    }
+
+    return null;
+  }
+
+  /// PASSWORD VALIDATOR
+  String? _passwordValidator(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Password is required';
+    }
+
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+
+    return null;
+  }
+
+  /// FORGOT PASSWORD
+  Future<void> _forgotPassword() async {
+    final email = widget.emailController.text.trim();
+
+    if (_emailValidator(email) != null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Enter a valid email address first")),
+      );
+      return;
+    }
+
+    final scaffold = ScaffoldMessenger.of(context);
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+
+      if (!mounted) return;
+
+      scaffold.showSnackBar(
+        const SnackBar(content: Text("Password reset email sent")),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String message;
+
+      switch (e.code) {
+        case 'user-not-found':
+          message = 'No account found with this email';
+          break;
+
+        case 'invalid-email':
+          message = 'Invalid email address';
+          break;
+
+        case 'too-many-requests':
+          message = 'Too many requests. Try again later';
+          break;
+
+        default:
+          message = e.message ?? 'Failed to send reset email';
+      }
+
+      scaffold.showSnackBar(SnackBar(content: Text(message)));
+    } catch (_) {
+      if (!mounted) return;
+
+      scaffold.showSnackBar(
+        const SnackBar(content: Text("Something went wrong")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = AppTheme.lightTheme;
@@ -31,26 +118,23 @@ class _LoginFormState extends State<LoginForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Email label
+          /// EMAIL
           Text("Email", style: theme.textTheme.bodyMedium),
           const SizedBox(height: 10),
 
-          /// Email input
           CustomTextField(
             controller: widget.emailController,
             hint: "Enter your email",
             prefixIcon: const Icon(Icons.email_outlined, size: 26),
-            validator: (value) => (value == null || !value.contains('@'))
-                ? "Enter a valid email"
-                : null,
+            validator: _emailValidator,
           ),
+
           const SizedBox(height: 20),
 
-          /// Password label
+          /// PASSWORD
           Text("Password", style: theme.textTheme.bodyMedium),
           const SizedBox(height: 10),
 
-          /// Password input with toggle
           CustomTextField(
             controller: widget.passwordController,
             hint: "Enter your password",
@@ -60,46 +144,22 @@ class _LoginFormState extends State<LoginForm> {
               icon: Icon(
                 obscurePassword ? Icons.visibility_off : Icons.visibility,
               ),
-              onPressed: () =>
-                  setState(() => obscurePassword = !obscurePassword),
+              onPressed: () {
+                setState(() {
+                  obscurePassword = !obscurePassword;
+                });
+              },
             ),
-            validator: (value) => (value == null || value.length < 6)
-                ? "Password too short"
-                : null,
+            validator: _passwordValidator,
           ),
-          SizedBox(height: 16),
 
-          /// Forgot password
+          const SizedBox(height: 16),
+
+          /// FORGOT PASSWORD
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: () async {
-                final email = widget.emailController.text.trim();
-                if (email.isEmpty) {
-                  if (!mounted) return; // Guard State usage
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Enter your email first")),
-                  );
-                  return;
-                }
-
-                // Capture scaffold context before async gap
-                final scaffold = ScaffoldMessenger.of(context);
-
-                try {
-                  await FirebaseAuth.instance.sendPasswordResetEmail(
-                    email: email,
-                  );
-
-                  if (!mounted) return; // Guard after async
-                  scaffold.showSnackBar(
-                    const SnackBar(content: Text("Password reset email sent")),
-                  );
-                } catch (e) {
-                  if (!mounted) return; // Guard after async
-                  scaffold.showSnackBar(SnackBar(content: Text(e.toString())));
-                }
-              },
+              onPressed: _forgotPassword,
               child: Text(
                 "Forgot Password?",
                 style: theme.textTheme.bodyMedium?.copyWith(
